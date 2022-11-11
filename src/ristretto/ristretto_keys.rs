@@ -5,12 +5,15 @@
 use std::{
     borrow::Borrow,
     cmp::Ordering,
+    convert::TryInto,
     fmt,
     hash::{Hash, Hasher},
+    io::{self, Write},
     ops::{Add, Mul, Sub},
 };
 
 use blake2::Blake2b;
+use borsh::{BorshDeserialize, BorshSerialize};
 use curve25519_dalek::{
     constants::RISTRETTO_BASEPOINT_TABLE,
     ristretto::{CompressedRistretto, RistrettoPoint},
@@ -54,6 +57,20 @@ use crate::{
 #[zeroize(drop)]
 pub struct RistrettoSecretKey(pub(crate) Scalar);
 
+impl BorshSerialize for RistrettoSecretKey {
+    fn serialize<W: Write>(&self, writer: &mut W) -> io::Result<()> {
+        BorshSerialize::serialize(&self.0.as_bytes(), writer)
+    }
+}
+
+impl BorshDeserialize for RistrettoSecretKey {
+    fn deserialize(buf: &mut &[u8]) -> io::Result<Self> {
+        Ok(Self(
+            Scalar::from_canonical_bytes((&buf[..]).try_into().unwrap()).unwrap(),
+        ))
+    }
+}
+
 const SCALAR_LENGTH: usize = 32;
 const PUBLIC_KEY_LENGTH: usize = 32;
 
@@ -76,7 +93,9 @@ impl ByteArray for RistrettoSecretKey {
     /// not exactly 32 bytes long, `from_bytes` returns an error. This function is guaranteed to return a valid key
     /// in the group since it performs a mod _l_ on the input.
     fn from_bytes(bytes: &[u8]) -> Result<RistrettoSecretKey, ByteArrayError>
-    where Self: Sized {
+    where
+        Self: Sized,
+    {
         if bytes.len() != 32 {
             return Err(ByteArrayError::IncorrectLength);
         }
@@ -407,7 +426,9 @@ impl ByteArray for RistrettoPublicKey {
     /// * The byte array is not exactly 32 bytes
     /// * The byte array does not represent a valid (compressed) point on the ristretto255 curve
     fn from_bytes(bytes: &[u8]) -> Result<RistrettoPublicKey, ByteArrayError>
-    where Self: Sized {
+    where
+        Self: Sized,
+    {
         // Check the length here, because The Ristretto constructor panics rather than returning an error
         if bytes.len() != 32 {
             return Err(ByteArrayError::IncorrectLength);
