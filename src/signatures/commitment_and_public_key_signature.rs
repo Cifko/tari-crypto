@@ -7,6 +7,8 @@ use std::{
     ops::{Add, Mul},
 };
 
+#[cfg(feature = "borsh")]
+use borsh::{BorshDeserialize, BorshSerialize};
 use rand::{CryptoRng, RngCore};
 use serde::{Deserialize, Serialize};
 use tari_utilities::ByteArray;
@@ -52,6 +54,18 @@ pub enum CommitmentAndPublicKeySignatureError {
 ///     `u_a*H + (u_x + w*u_y)*G - ephemeral_commitment - w*ephemeral_pubkey - e*commitment - (w*e)*pubkey == 0`
 /// The use of efficient multiscalar multiplication algorithms may also be useful for efficiency.
 /// The use of precomputation tables for `G` and `H` may also be useful for efficiency.
+/// cbindgen:ignore
+#[cfg(feature = "borsh")]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CommitmentAndPublicKeySignature<P: BorshSerialize + BorshDeserialize, K> {
+    ephemeral_commitment: HomomorphicCommitment<P>,
+    ephemeral_pubkey: P,
+    u_a: K,
+    u_x: K,
+    u_y: K,
+}
+
+#[cfg(not(feature = "borsh"))]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CommitmentAndPublicKeySignature<P, K> {
     ephemeral_commitment: HomomorphicCommitment<P>,

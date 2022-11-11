@@ -7,6 +7,8 @@ use std::{
     ops::{Add, Mul},
 };
 
+#[cfg(feature = "borsh")]
+use borsh::{BorshDeserialize, BorshSerialize};
 use serde::{Deserialize, Serialize};
 use tari_utilities::ByteArray;
 use thiserror::Error;
@@ -44,6 +46,17 @@ pub enum CommitmentSignatureError {
 /// Verification of the Commitment Signature (R, u, v) entails the following:
 ///   S = v*H + u*G          ... (Pedersen commitment of the publicly known private signature keys)
 ///   S =? R + e.C           ... (final verification)
+/// cbindgen:ignore
+#[cfg(feature = "borsh")]
+#[allow(non_snake_case)]
+#[derive(Debug, Clone, Serialize, Deserialize, BorshSerialize, BorshDeserialize)]
+pub struct CommitmentSignature<P: BorshSerialize + BorshDeserialize, K> {
+    public_nonce: HomomorphicCommitment<P>,
+    u: K,
+    v: K,
+}
+
+#[cfg(not(feature = "borsh"))]
 #[allow(non_snake_case)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CommitmentSignature<P, K> {

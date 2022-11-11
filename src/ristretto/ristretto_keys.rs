@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: BSD-3-Clause
 
 //! The Tari-compatible implementation of Ristretto based on the curve25519-dalek implementation
+#[cfg(feature = "borsh")]
+use std::io::Write;
 use std::{
     borrow::Borrow,
     cmp::Ordering,
@@ -9,8 +11,12 @@ use std::{
     hash::{Hash, Hasher},
     ops::{Add, Mul, Sub},
 };
+#[cfg(feature = "borsh")]
+use std::{convert::TryInto, io};
 
 use blake2::Blake2b;
+#[cfg(feature = "borsh")]
+use borsh::{BorshDeserialize, BorshSerialize};
 use curve25519_dalek::{
     constants::RISTRETTO_BASEPOINT_TABLE,
     ristretto::{CompressedRistretto, RistrettoPoint},
@@ -53,6 +59,24 @@ use crate::{
 #[derive(Eq, Clone, Default, Zeroize)]
 #[zeroize(drop)]
 pub struct RistrettoSecretKey(pub(crate) Scalar);
+
+#[cfg(feature = "borsh")]
+impl BorshSerialize for RistrettoSecretKey {
+    fn serialize<W: Write>(&self, writer: &mut W) -> io::Result<()> {
+        BorshSerialize::serialize(&self.0.as_bytes(), writer)
+    }
+}
+
+#[cfg(feature = "borsh")]
+impl BorshDeserialize for RistrettoSecretKey {
+    fn deserialize(buf: &mut &[u8]) -> io::Result<Self> {
+        Ok(Self(
+            // Self::from_bytes(buf).map_err(|e| io::Error::new(io::ErrorKind::InvalidInput, e.to_string()))
+            Scalar::from_canonical_bytes((&buf[..]).try_into().unwrap())
+                .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidData, "Deserialize error"))?,
+        ))
+    }
+}
 
 const SCALAR_LENGTH: usize = 32;
 const PUBLIC_KEY_LENGTH: usize = 32;
@@ -236,6 +260,20 @@ impl<'a> Borrow<Scalar> for &'a RistrettoSecretKey {
 pub struct RistrettoPublicKey {
     point: RistrettoPoint,
     compressed: OnceCell<CompressedRistretto>,
+}
+
+#[cfg(feature = "borsh")]
+impl BorshSerialize for RistrettoPublicKey {
+    fn serialize<W: Write>(&self, writer: &mut W) -> io::Result<()> {
+        BorshSerialize::serialize(&self.as_bytes(), writer)
+    }
+}
+
+#[cfg(feature = "borsh")]
+impl BorshDeserialize for RistrettoPublicKey {
+    fn deserialize(buf: &mut &[u8]) -> io::Result<Self> {
+        Self::from_bytes(buf).map_err(|e| io::Error::new(io::ErrorKind::InvalidInput, e.to_string()))
+    }
 }
 
 impl RistrettoPublicKey {

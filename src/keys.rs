@@ -8,6 +8,8 @@
 
 use std::ops::Add;
 
+#[cfg(feature = "borsh")]
+use borsh::{BorshDeserialize, BorshSerialize};
 use rand::{CryptoRng, Rng};
 use serde::{de::DeserializeOwned, ser::Serialize};
 use tari_utilities::ByteArray;
@@ -40,6 +42,49 @@ pub trait SecretKey: ByteArray + Clone + PartialEq + Eq + Add<Output = Self> + D
 /// implementations need to implement this trait for them to be used in Tari.
 ///
 /// See [SecretKey](trait.SecretKey.html) for an example.
+/// cbindgen:ignore
+#[cfg(feature = "borsh")]
+pub trait PublicKey:
+    ByteArray
+    + Add<Output = Self>
+    + Clone
+    + PartialOrd
+    + Ord
+    + Default
+    + Serialize
+    + DeserializeOwned
+    + Zeroize
+    + BorshSerialize
+    + BorshDeserialize
+{
+    /// The output size len of Public Key
+    const KEY_LEN: usize;
+
+    /// The related [SecretKey](trait.SecretKey.html) type
+    type K: SecretKey;
+
+    /// Calculate the public key associated with the given secret key. This should not fail; if a
+    /// failure does occur (implementation error?), the function will panic.
+    fn from_secret_key(k: &Self::K) -> Self;
+
+    /// The length of the public key when converted to bytes
+    fn key_length() -> usize {
+        Self::KEY_LEN
+    }
+
+    /// Multiplies each of the items in `scalars` by their respective item in `points` and then adds
+    /// the results to produce a single public key
+    fn batch_mul(scalars: &[Self::K], points: &[Self]) -> Self;
+
+    /// Generate a random public and secret key
+    fn random_keypair<R: Rng + CryptoRng>(rng: &mut R) -> (Self::K, Self) {
+        let k = Self::K::random(rng);
+        let pk = Self::from_secret_key(&k);
+        (k, pk)
+    }
+}
+
+#[cfg(not(feature = "borsh"))]
 pub trait PublicKey:
     ByteArray + Add<Output = Self> + Clone + PartialOrd + Ord + Default + Serialize + DeserializeOwned + Zeroize
 {

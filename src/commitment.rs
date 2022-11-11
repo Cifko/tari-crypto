@@ -13,6 +13,8 @@ use std::{
     ops::{Add, Mul, Sub},
 };
 
+#[cfg(feature = "borsh")]
+use borsh::{BorshDeserialize, BorshSerialize};
 use serde::{Deserialize, Serialize};
 use tari_utilities::{ByteArray, ByteArrayError};
 
@@ -32,6 +34,12 @@ use crate::{
 ///   C_2 &= v_2.H + k_2.G \\\\
 ///   \therefore C_1 + C_2 &= (v_1 + v_2)H + (k_1 + k_2)G
 /// \end{aligned} $$
+/// cbindgen:ignore
+#[cfg(feature = "borsh")]
+#[derive(Debug, Clone, Serialize, Deserialize, Default, BorshSerialize, BorshDeserialize)]
+pub struct HomomorphicCommitment<P: BorshSerialize + BorshDeserialize>(pub(crate) P);
+
+#[cfg(not(feature = "borsh"))]
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct HomomorphicCommitment<P>(pub(crate) P);
 

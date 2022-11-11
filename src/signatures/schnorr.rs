@@ -11,6 +11,8 @@ use std::{
     ops::{Add, Mul},
 };
 
+#[cfg(feature = "borsh")]
+use borsh::{BorshDeserialize, BorshSerialize};
 use digest::Digest;
 use serde::{Deserialize, Serialize};
 use tari_utilities::ByteArray;
@@ -42,6 +44,7 @@ pub enum SchnorrSignatureError {
 /// More details on Schnorr signatures can be found at [TLU](https://tlu.tarilabs.com/cryptography/introduction-schnorr-signatures).
 #[allow(non_snake_case)]
 #[derive(PartialEq, Eq, Copy, Debug, Clone, Serialize, Deserialize, Hash)]
+#[cfg_attr(feature = "borsh", derive(BorshSerialize, BorshDeserialize))]
 pub struct SchnorrSignature<P, K, H = SchnorrSigChallenge> {
     public_nonce: P,
     signature: K,
