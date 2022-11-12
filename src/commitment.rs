@@ -13,6 +13,7 @@ use std::{
     ops::{Add, Mul, Sub},
 };
 
+use borsh::{BorshDeserialize, BorshSerialize};
 use serde::{Deserialize, Serialize};
 use tari_utilities::{ByteArray, ByteArrayError};
 
@@ -32,11 +33,12 @@ use crate::{
 ///   C_2 &= v_2.H + k_2.G \\\\
 ///   \therefore C_1 + C_2 &= (v_1 + v_2)H + (k_1 + k_2)G
 /// \end{aligned} $$
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default, BorshSerialize, BorshDeserialize)]
 pub struct HomomorphicCommitment<P>(pub(crate) P);
 
 impl<P> HomomorphicCommitment<P>
-where P: PublicKey
+where
+    P: PublicKey,
 {
     /// Get this commitment as a public key point
     pub fn as_public_key(&self) -> &P {
@@ -50,7 +52,8 @@ where P: PublicKey
 }
 
 impl<P> ByteArray for HomomorphicCommitment<P>
-where P: PublicKey
+where
+    P: PublicKey,
 {
     fn from_bytes(bytes: &[u8]) -> Result<Self, ByteArrayError> {
         let p = P::from_bytes(bytes)?;
@@ -63,7 +66,8 @@ where P: PublicKey
 }
 
 impl<P> PartialOrd for HomomorphicCommitment<P>
-where P: PublicKey
+where
+    P: PublicKey,
 {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.0.cmp(&other.0))
@@ -71,7 +75,8 @@ where P: PublicKey
 }
 
 impl<P> Ord for HomomorphicCommitment<P>
-where P: PublicKey
+where
+    P: PublicKey,
 {
     fn cmp(&self, other: &Self) -> Ordering {
         self.0.cmp(&other.0)
