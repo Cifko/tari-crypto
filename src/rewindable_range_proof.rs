@@ -3,6 +3,8 @@
 
 //! Rewindable Range Proofs
 
+use borsh::{BorshDeserialize, BorshSerialize};
+
 use crate::{
     commitment::HomomorphicCommitment,
     errors::RangeProofError,
@@ -19,7 +21,7 @@ pub trait RewindableRangeProofService {
     /// The type of the secret key
     type K: SecretKey;
     /// The type of the public key
-    type PK: PublicKey<K = Self::K>;
+    type PK: PublicKey<K = Self::K> + BorshSerialize + BorshDeserialize;
 
     /// Construct a range proof with the ability to rewind it. Requires two rewind keys and a 19-byte message to be
     /// included in the range proof. The proof can contain 23 bytes but 4 bytes are used to confirm that a rewind
@@ -76,7 +78,8 @@ impl RewindResult {
 /// factor.
 #[derive(Debug, PartialEq, Eq)]
 pub struct FullRewindResult<K>
-where K: SecretKey
+where
+    K: SecretKey,
 {
     /// The committed value
     pub committed_value: u64,
@@ -87,7 +90,8 @@ where K: SecretKey
 }
 
 impl<K> FullRewindResult<K>
-where K: SecretKey
+where
+    K: SecretKey,
 {
     /// Creates a new `FullRewindResult`
     pub fn new(committed_value: u64, proof_message: [u8; REWIND_USER_MESSAGE_LENGTH], blinding_factor: K) -> Self {

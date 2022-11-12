@@ -257,6 +257,19 @@ pub struct RistrettoPublicKey {
     compressed: OnceCell<CompressedRistretto>,
 }
 
+impl BorshSerialize for RistrettoPublicKey {
+    fn serialize<W: Write>(&self, writer: &mut W) -> io::Result<()> {
+        BorshSerialize::serialize(&self.as_bytes(), writer);
+        Ok(())
+    }
+}
+
+impl BorshDeserialize for RistrettoPublicKey {
+    fn deserialize(buf: &mut &[u8]) -> io::Result<Self> {
+        Ok(Self::from_bytes(buf).unwrap())
+    }
+}
+
 impl RistrettoPublicKey {
     // Private constructor
     pub(super) fn new_from_pk(pk: RistrettoPoint) -> Self {

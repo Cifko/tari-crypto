@@ -47,7 +47,7 @@ pub enum CommitmentSignatureError {
 ///   S =? R + e.C           ... (final verification)
 #[allow(non_snake_case)]
 #[derive(Debug, Clone, Serialize, Deserialize, BorshSerialize, BorshDeserialize)]
-pub struct CommitmentSignature<P, K> {
+pub struct CommitmentSignature<P: BorshSerialize + BorshDeserialize, K> {
     public_nonce: HomomorphicCommitment<P>,
     u: K,
     v: K,
@@ -55,7 +55,7 @@ pub struct CommitmentSignature<P, K> {
 
 impl<P, K> CommitmentSignature<P, K>
 where
-    P: PublicKey<K = K>,
+    P: PublicKey<K = K> + BorshSerialize + BorshDeserialize,
     K: SecretKey,
 {
     /// Creates a new [CommitmentSignature]
@@ -172,7 +172,7 @@ where
 
 impl<'a, 'b, P, K> Add<&'b CommitmentSignature<P, K>> for &'a CommitmentSignature<P, K>
 where
-    P: PublicKey<K = K>,
+    P: PublicKey<K = K> + BorshSerialize + BorshDeserialize,
     &'a HomomorphicCommitment<P>: Add<&'b HomomorphicCommitment<P>, Output = HomomorphicCommitment<P>>,
     K: SecretKey,
     &'a K: Add<&'b K, Output = K>,
@@ -189,7 +189,7 @@ where
 
 impl<'a, P, K> Add<CommitmentSignature<P, K>> for &'a CommitmentSignature<P, K>
 where
-    P: PublicKey<K = K>,
+    P: PublicKey<K = K> + BorshSerialize + BorshDeserialize,
     for<'b> &'a HomomorphicCommitment<P>: Add<&'b HomomorphicCommitment<P>, Output = HomomorphicCommitment<P>>,
     K: SecretKey,
     for<'b> &'a K: Add<&'b K, Output = K>,
@@ -206,7 +206,7 @@ where
 
 impl<P, K> Default for CommitmentSignature<P, K>
 where
-    P: PublicKey<K = K>,
+    P: PublicKey<K = K> + BorshSerialize + BorshDeserialize,
     K: SecretKey,
 {
     fn default() -> Self {
@@ -220,7 +220,7 @@ where
 /// nonces are already equal, otherwise the public nonce ordering determines the CommitmentSignature order.
 impl<P, K> Ord for CommitmentSignature<P, K>
 where
-    P: PublicKey<K = K>,
+    P: PublicKey<K = K> + BorshSerialize + BorshDeserialize,
     K: SecretKey,
 {
     fn cmp(&self, other: &Self) -> Ordering {
@@ -244,7 +244,7 @@ where
 
 impl<P, K> PartialOrd for CommitmentSignature<P, K>
 where
-    P: PublicKey<K = K>,
+    P: PublicKey<K = K> + BorshSerialize + BorshDeserialize,
     K: SecretKey,
 {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
@@ -254,7 +254,7 @@ where
 
 impl<P, K> PartialEq for CommitmentSignature<P, K>
 where
-    P: PublicKey<K = K>,
+    P: PublicKey<K = K> + BorshSerialize + BorshDeserialize,
     K: SecretKey,
 {
     fn eq(&self, other: &Self) -> bool {
@@ -264,14 +264,14 @@ where
 
 impl<P, K> Eq for CommitmentSignature<P, K>
 where
-    P: PublicKey<K = K>,
+    P: PublicKey<K = K> + BorshSerialize + BorshDeserialize,
     K: SecretKey,
 {
 }
 
 impl<P, K> Hash for CommitmentSignature<P, K>
 where
-    P: PublicKey<K = K>,
+    P: PublicKey<K = K> + BorshSerialize + BorshDeserialize,
     K: SecretKey,
 {
     fn hash<H: Hasher>(&self, state: &mut H) {

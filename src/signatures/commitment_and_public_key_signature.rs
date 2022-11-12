@@ -7,6 +7,7 @@ use std::{
     ops::{Add, Mul},
 };
 
+use borsh::{BorshDeserialize, BorshSerialize};
 use rand::{CryptoRng, RngCore};
 use serde::{Deserialize, Serialize};
 use tari_utilities::ByteArray;
@@ -53,7 +54,7 @@ pub enum CommitmentAndPublicKeySignatureError {
 /// The use of efficient multiscalar multiplication algorithms may also be useful for efficiency.
 /// The use of precomputation tables for `G` and `H` may also be useful for efficiency.
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct CommitmentAndPublicKeySignature<P, K> {
+pub struct CommitmentAndPublicKeySignature<P: BorshSerialize + BorshDeserialize, K> {
     ephemeral_commitment: HomomorphicCommitment<P>,
     ephemeral_pubkey: P,
     u_a: K,
@@ -63,7 +64,7 @@ pub struct CommitmentAndPublicKeySignature<P, K> {
 
 impl<P, K> CommitmentAndPublicKeySignature<P, K>
 where
-    P: PublicKey<K = K>,
+    P: PublicKey<K = K> + BorshSerialize + BorshDeserialize,
     K: SecretKey,
 {
     /// Creates a new [CommitmentSignature]
@@ -242,7 +243,7 @@ where
 
 impl<'a, 'b, P, K> Add<&'b CommitmentAndPublicKeySignature<P, K>> for &'a CommitmentAndPublicKeySignature<P, K>
 where
-    P: PublicKey<K = K>,
+    P: PublicKey<K = K> + BorshSerialize + BorshDeserialize,
     &'a HomomorphicCommitment<P>: Add<&'b HomomorphicCommitment<P>, Output = HomomorphicCommitment<P>>,
     &'a P: Add<&'b P, Output = P>,
     K: SecretKey,
@@ -269,7 +270,7 @@ where
 
 impl<'a, P, K> Add<CommitmentAndPublicKeySignature<P, K>> for &'a CommitmentAndPublicKeySignature<P, K>
 where
-    P: PublicKey<K = K>,
+    P: PublicKey<K = K> + BorshSerialize + BorshDeserialize,
     for<'b> &'a HomomorphicCommitment<P>: Add<&'b HomomorphicCommitment<P>, Output = HomomorphicCommitment<P>>,
     for<'b> &'a P: Add<&'b P, Output = P>,
     K: SecretKey,
@@ -296,7 +297,7 @@ where
 
 impl<P, K> Default for CommitmentAndPublicKeySignature<P, K>
 where
-    P: PublicKey<K = K>,
+    P: PublicKey<K = K> + BorshSerialize + BorshDeserialize,
     K: SecretKey,
 {
     fn default() -> Self {
@@ -314,7 +315,7 @@ where
 /// `ephemeral_commitment, ephemeral_pubkey, u_a, u_x, u_y`
 impl<P, K> Ord for CommitmentAndPublicKeySignature<P, K>
 where
-    P: PublicKey<K = K>,
+    P: PublicKey<K = K> + BorshSerialize + BorshDeserialize,
     K: SecretKey,
 {
     fn cmp(&self, other: &Self) -> Ordering {
@@ -344,7 +345,7 @@ where
 
 impl<P, K> PartialOrd for CommitmentAndPublicKeySignature<P, K>
 where
-    P: PublicKey<K = K>,
+    P: PublicKey<K = K> + BorshSerialize + BorshDeserialize,
     K: SecretKey,
 {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
@@ -354,28 +355,28 @@ where
 
 impl<P, K> PartialEq for CommitmentAndPublicKeySignature<P, K>
 where
-    P: PublicKey<K = K>,
+    P: PublicKey<K = K> + BorshSerialize + BorshDeserialize,
     K: SecretKey,
 {
     fn eq(&self, other: &Self) -> bool {
-        self.ephemeral_commitment().eq(other.ephemeral_commitment()) &&
-            self.ephemeral_pubkey().eq(other.ephemeral_pubkey()) &&
-            self.u_a().eq(other.u_a()) &&
-            self.u_x().eq(other.u_x()) &&
-            self.u_y().eq(other.u_y())
+        self.ephemeral_commitment().eq(other.ephemeral_commitment())
+            && self.ephemeral_pubkey().eq(other.ephemeral_pubkey())
+            && self.u_a().eq(other.u_a())
+            && self.u_x().eq(other.u_x())
+            && self.u_y().eq(other.u_y())
     }
 }
 
 impl<P, K> Eq for CommitmentAndPublicKeySignature<P, K>
 where
-    P: PublicKey<K = K>,
+    P: PublicKey<K = K> + BorshSerialize + BorshDeserialize,
     K: SecretKey,
 {
 }
 
 impl<P, K> Hash for CommitmentAndPublicKeySignature<P, K>
 where
-    P: PublicKey<K = K>,
+    P: PublicKey<K = K> + BorshSerialize + BorshDeserialize,
     K: SecretKey,
 {
     fn hash<H: Hasher>(&self, state: &mut H) {

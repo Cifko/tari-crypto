@@ -4,6 +4,8 @@
 //! Range proofs are used to determine if a value lies inside a particular range. Most commonly, we
 //! want to prove in zero knowledge that a value is non-negative.
 
+use borsh::{BorshDeserialize, BorshSerialize};
+
 use crate::{
     commitment::HomomorphicCommitment,
     errors::RangeProofError,
@@ -17,7 +19,7 @@ pub trait RangeProofService {
     /// The secret key
     type K: SecretKey;
     /// The public key
-    type PK: PublicKey<K = Self::K>;
+    type PK: PublicKey<K = Self::K> + BorshSerialize + BorshDeserialize;
 
     /// Construct a new range proof for the given secret key and value. The resulting proof will be sufficient
     /// evidence that the prover knows the secret key and value, and that the value lies in the range determined by

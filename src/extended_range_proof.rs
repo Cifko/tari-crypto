@@ -3,6 +3,8 @@
 
 //! Extended range proofs
 
+use borsh::{BorshDeserialize, BorshSerialize};
+
 use crate::{
     commitment::{ExtensionDegree, HomomorphicCommitment},
     errors::RangeProofError,
@@ -16,7 +18,7 @@ pub trait ExtendedRangeProofService {
     /// The secret key
     type K: SecretKey;
     /// The public key
-    type PK: PublicKey<K = Self::K>;
+    type PK: PublicKey<K = Self::K> + BorshSerialize + BorshDeserialize;
 
     /// Construct a simple non-aggregated range proof with default minimum value promise of `0` and the ability to
     /// rewind it. Requires a rewind key (seed nonce) to be included in the range proof.
@@ -99,13 +101,15 @@ pub trait ExtendedRangeProofService {
 /// extracted from a range proof containing the mask (e.g. blinding factor vector).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ExtendedMask<K>
-where K: SecretKey
+where
+    K: SecretKey,
 {
     secrets: Vec<K>,
 }
 
 impl<K> ExtendedMask<K>
-where K: SecretKey
+where
+    K: SecretKey,
 {
     /// Construct a new extended mask
     pub fn assign(extension_degree: ExtensionDegree, secrets: Vec<K>) -> Result<ExtendedMask<K>, RangeProofError> {
@@ -127,7 +131,8 @@ where K: SecretKey
 /// The (public) statement contains the commitment and a minimum promised value
 #[derive(Clone)]
 pub struct Statement<PK>
-where PK: PublicKey
+where
+    PK: PublicKey + BorshSerialize + BorshDeserialize,
 {
     /// The commitments
     pub commitment: HomomorphicCommitment<PK>,
@@ -139,14 +144,16 @@ where PK: PublicKey
 /// promised values
 #[derive(Clone)]
 pub struct AggregatedPublicStatement<PK>
-where PK: PublicKey
+where
+    PK: PublicKey + BorshSerialize + BorshDeserialize,
 {
     /// The aggregated statement
     pub statements: Vec<Statement<PK>>,
 }
 
 impl<PK> AggregatedPublicStatement<PK>
-where PK: PublicKey
+where
+    PK: PublicKey + BorshSerialize + BorshDeserialize,
 {
     /// Initialize a new public 'ExtendedStatement' with sanity checks:
     /// - `statements` must be a power of 2 as mandated by the `bulletproofs_plus` implementation
@@ -164,7 +171,8 @@ where PK: PublicKey
 /// for mask recovery
 #[derive(Clone)]
 pub struct AggregatedPrivateStatement<PK>
-where PK: PublicKey
+where
+    PK: PublicKey + BorshSerialize + BorshDeserialize,
 {
     /// The aggregated commitments and minimum promised values
     pub statements: Vec<Statement<PK>>,
@@ -173,7 +181,8 @@ where PK: PublicKey
 }
 
 impl<PK> AggregatedPrivateStatement<PK>
-where PK: PublicKey
+where
+    PK: PublicKey + BorshSerialize + BorshDeserialize,
 {
     /// Initialize a new private 'ExtendedStatement' with sanity checks that supports recovery:
     /// - `statements` must be a power of 2 as mandated by the `bulletproofs_plus` implementation
@@ -200,7 +209,8 @@ where PK: PublicKey
 /// promise; this will be used to construct the extended range proof
 #[derive(Clone)]
 pub struct ExtendedWitness<K>
-where K: SecretKey
+where
+    K: SecretKey,
 {
     /// Extended blinding factors of the commitment
     pub mask: ExtendedMask<K>,
@@ -211,7 +221,8 @@ where K: SecretKey
 }
 
 impl<K> ExtendedWitness<K>
-where K: SecretKey
+where
+    K: SecretKey,
 {
     /// Create a new private 'ExtendedWitness' to construct an extended range proof
     pub fn new(mask: ExtendedMask<K>, value: u64, minimum_value_promise: u64) -> Self {

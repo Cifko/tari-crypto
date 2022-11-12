@@ -34,11 +34,11 @@ use crate::{
 ///   \therefore C_1 + C_2 &= (v_1 + v_2)H + (k_1 + k_2)G
 /// \end{aligned} $$
 #[derive(Debug, Clone, Serialize, Deserialize, Default, BorshSerialize, BorshDeserialize)]
-pub struct HomomorphicCommitment<P>(pub(crate) P);
+pub struct HomomorphicCommitment<P: BorshSerialize + BorshDeserialize>(pub(crate) P);
 
 impl<P> HomomorphicCommitment<P>
 where
-    P: PublicKey,
+    P: PublicKey + BorshSerialize + BorshDeserialize,
 {
     /// Get this commitment as a public key point
     pub fn as_public_key(&self) -> &P {
@@ -53,7 +53,7 @@ where
 
 impl<P> ByteArray for HomomorphicCommitment<P>
 where
-    P: PublicKey,
+    P: PublicKey + BorshSerialize + BorshDeserialize,
 {
     fn from_bytes(bytes: &[u8]) -> Result<Self, ByteArrayError> {
         let p = P::from_bytes(bytes)?;
@@ -67,7 +67,7 @@ where
 
 impl<P> PartialOrd for HomomorphicCommitment<P>
 where
-    P: PublicKey,
+    P: PublicKey + BorshSerialize + BorshDeserialize,
 {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.0.cmp(&other.0))
@@ -76,7 +76,7 @@ where
 
 impl<P> Ord for HomomorphicCommitment<P>
 where
-    P: PublicKey,
+    P: PublicKey + BorshSerialize + BorshDeserialize,
 {
     fn cmp(&self, other: &Self) -> Ordering {
         self.0.cmp(&other.0)
@@ -86,7 +86,7 @@ where
 /// Add two commitments together. Note! There is no check that the bases are equal.
 impl<'b, P> Add for &'b HomomorphicCommitment<P>
 where
-    P: PublicKey,
+    P: PublicKey + BorshSerialize + BorshDeserialize,
     &'b P: Add<&'b P, Output = P>,
 {
     type Output = HomomorphicCommitment<P>;
@@ -99,7 +99,7 @@ where
 /// Add a public key to a commitment. Note! There is no check that the bases are equal.
 impl<'b, P> Add<&'b P> for &'b HomomorphicCommitment<P>
 where
-    P: PublicKey,
+    P: PublicKey + BorshSerialize + BorshDeserialize,
     &'b P: Add<&'b P, Output = P>,
 {
     type Output = HomomorphicCommitment<P>;
@@ -112,7 +112,7 @@ where
 /// Subtracts the left commitment from the right commitment. Note! There is no check that the bases are equal.
 impl<'b, P> Sub for &'b HomomorphicCommitment<P>
 where
-    P: PublicKey,
+    P: PublicKey + BorshSerialize + BorshDeserialize,
     &'b P: Sub<&'b P, Output = P>,
 {
     type Output = HomomorphicCommitment<P>;
@@ -125,7 +125,7 @@ where
 /// Multiply the commitment with a private key
 impl<'a, 'b, P, K> Mul<&'b K> for &'a HomomorphicCommitment<P>
 where
-    P: PublicKey<K = K>,
+    P: PublicKey<K = K> + BorshSerialize + BorshDeserialize,
     K: SecretKey,
     &'b K: Mul<&'a P, Output = P>,
 {
@@ -137,24 +137,24 @@ where
     }
 }
 
-impl<P: PublicKey> Hash for HomomorphicCommitment<P> {
+impl<P: PublicKey + BorshSerialize + BorshDeserialize> Hash for HomomorphicCommitment<P> {
     fn hash<H: Hasher>(&self, state: &mut H) {
         state.write(self.as_bytes())
     }
 }
 
-impl<P: PublicKey> PartialEq for HomomorphicCommitment<P> {
+impl<P: PublicKey + BorshSerialize + BorshDeserialize> PartialEq for HomomorphicCommitment<P> {
     fn eq(&self, other: &Self) -> bool {
         self.as_public_key().eq(other.as_public_key())
     }
 }
 
-impl<P: PublicKey> Eq for HomomorphicCommitment<P> {}
+impl<P: PublicKey + BorshSerialize + BorshDeserialize> Eq for HomomorphicCommitment<P> {}
 
 /// A trait for creating commitments
 pub trait HomomorphicCommitmentFactory {
     /// The type of public key that the underlying commitment will be based on
-    type P: PublicKey;
+    type P: PublicKey + BorshSerialize + BorshDeserialize;
 
     /// Create a new commitment with the blinding factor _k_ and value _v_ provided. The implementing type will provide
     /// the base values
@@ -178,7 +178,7 @@ pub trait HomomorphicCommitmentFactory {
 /// A trait for creating extended commitments that are based on a public key
 pub trait ExtendedHomomorphicCommitmentFactory {
     /// The type of public key that the underlying commitment will be based on
-    type P: PublicKey;
+    type P: PublicKey + BorshSerialize + BorshDeserialize;
 
     /// Create a new commitment with the blinding factor vector **k** and value _v_ provided. The implementing type will
     /// provide the base values
